@@ -24,6 +24,7 @@ Building
 ```sh
 $ git clone git://github.com/zinid/erlang-rsync.git
 $ cd erlang-rsync
+$ ./configure
 $ make
 ```
 
