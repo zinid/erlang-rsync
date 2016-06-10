@@ -1,0 +1,12 @@
+@author Evgeniy Khramtsov <ekhramtsov@process-one.net>
+@version @PACKAGE_VERSION@
+@title @PACKAGE_NAME@
+@doc
+rsync is an Erlang wrapper for
+<a href="http://librsync.sourcefrog.net">librsync</a> library.
+It provides basic functions for direct files manipulations
+(sig/1, delta/2, etc) as well as low-level functions
+for fine-grained control (sig_init/0, delta_update/2, etc).
+The low-level interface is somewhat similar to the `hash' functions
+from `crypto' module.
+@end

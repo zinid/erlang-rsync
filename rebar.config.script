@@ -1,0 +1,16 @@
+Cfg = case file:consult("vars.config") of
+	  {ok, Terms} -> Terms;
+	  _Err -> []
+      end,
+
+CFlags = proplists:get_value(cflags, Cfg, "-g -O2 -Wall").
+LDFlags = proplists:get_value(ldflags, Cfg, "-lrsync").
+
+[{erl_opts, [debug_info, {src_dirs, ["src"]}]},
+ {port_env, [{"CFLAGS", CFlags}, {"LDFLAGS", LDFlags}]},
+ {port_specs, [{"priv/lib/rsync.so", ["c_src/rsync.c"]}]}].
+
+%% Local Variables:
+%% mode: erlang
+%% End:
+%% vim: set filetype=erlang tabstop=8:
