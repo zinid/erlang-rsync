@@ -125,6 +125,8 @@ static ERL_NIF_TERM format_error(ErlNifEnv* env, int argc,
   else if (!strcmp("param_error", atom)) res = RS_PARAM_ERROR;
   else res = -1;
 
+  free(atom);
+
   return enif_make_string(env, rs_strerror(res), ERL_NIF_LATIN1);
 }
 
