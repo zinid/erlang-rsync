@@ -45,34 +45,75 @@ all_files_exist_test() ->
     ?assertEqual(true, filelib:is_regular(sig_correct_file())),
     ?assertEqual(true, filelib:is_regular(delta_correct_file())).
 
-sig_1_test() ->
+sig_1_file_test() ->
     ?assertEqual(file:read_file(sig_correct_file()),
 		 rsync:sig(local_file())).
 
-sig_2_test() ->
+sig_1_binary_test() ->
+    {ok, Sig} = file:read_file(local_file()),
+    ?assertEqual(file:read_file(sig_correct_file()),
+		 rsync:sig({raw, Sig})).
+
+sig_2_file_test() ->
     ?assertEqual(ok, rsync:sig(local_file(),
 			       sig_output_file())),
     ?assertEqual(file:read_file(sig_correct_file()),
 		 file:read_file(sig_output_file())).
 
-delta_2_test() ->
+sig_2_binary_test() ->
+    {ok, Sig} = file:read_file(local_file()),
+    ?assertEqual(ok, rsync:sig({raw, Sig}, sig_output_file())),
+    ?assertEqual(file:read_file(sig_correct_file()),
+		 file:read_file(sig_output_file())).
+
+delta_2_file_file_test() ->
     ?assertEqual(file:read_file(delta_correct_file()),
 		 rsync:delta(sig_output_file(), remote_file())).
 
-delta_3_test() ->
+delta_2_binary_binary_test() ->
+    {ok, RemoteData} = file:read_file(remote_file()),
+    {ok, SigData} = file:read_file(sig_output_file()),
+    ?assertEqual(file:read_file(delta_correct_file()),
+		 rsync:delta({raw, SigData}, {raw, RemoteData})).
+
+delta_3_file_file_test() ->
     ?assertEqual(ok, rsync:delta(sig_output_file(),
 				 remote_file(),
 				 delta_output_file())),
     ?assertEqual(file:read_file(delta_correct_file()),
 		 file:read_file(delta_output_file())).
 
-patch_2_test() ->
+delta_3_binary_binary_test() ->
+    {ok, SigData} = file:read_file(sig_output_file()),
+    {ok, RemoteData} = file:read_file(remote_file()),
+    ?assertEqual(ok, rsync:delta({raw, SigData},
+				 {raw, RemoteData},
+				 delta_output_file())),
+    ?assertEqual(file:read_file(delta_correct_file()),
+		 file:read_file(delta_output_file())).
+
+patch_2_file_file_test() ->
     ?assertEqual(file:read_file(remote_file()),
 		 rsync:patch(local_file(), delta_output_file())).
 
-patch_3_test() ->
+patch_2_binary_binary_test() ->
+    {ok, LocalData} = file:read_file(local_file()),
+    {ok, DeltaData} = file:read_file(delta_output_file()),
+    ?assertEqual(file:read_file(remote_file()),
+		 rsync:patch({raw, LocalData}, {raw, DeltaData})).
+
+patch_3_file_file_test() ->
     ?assertEqual(ok, rsync:patch(local_file(),
 				 delta_output_file(),
+				 patched_file())),
+    ?assertEqual(file:read_file(remote_file()),
+		 file:read_file(patched_file())).
+
+patch_3_binary_binary_test() ->
+    {ok, LocalData} = file:read_file(local_file()),
+    {ok, DeltaData} = file:read_file(delta_output_file()),
+    ?assertEqual(ok, rsync:patch({raw, LocalData},
+				 {raw, DeltaData},
 				 patched_file())),
     ?assertEqual(file:read_file(remote_file()),
 		 file:read_file(patched_file())).

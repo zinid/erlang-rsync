@@ -40,17 +40,22 @@
 %%%===================================================================
 %%% API
 %%%===================================================================
--spec sig(file:filename()) -> {ok, binary()} | error().
+-spec sig(file:filename() | {raw, iodata()}) -> {ok, binary()} | error().
 %% @doc Computes signature of `File'.
 sig(File) ->
     sig(File, undefined).
 
--spec sig(file:filename(), file:filename()) -> ok | error();
-	 (file:filename(), undefined) -> {ok, binary()} | error().
+-spec sig(file:filename() | {raw, iodata()}, file:filename()) -> ok | error();
+	 (file:filename() | {raw, iodata()}, undefined) -> {ok, binary()} | error().
 %% @doc Computes signature of a file `File' and writes it into a file `SigFile'.
 sig(File, SigFile) ->
     try
-	{ok, InFd} = file:open(File, [read|file_opts()]),
+	{ok, InFd} = case File of
+			 {raw, Data} ->
+			     {ok, iolist_to_binary(Data)};
+			 _ ->
+			     file:open(File, [read|file_opts()])
+		     end,
 	{ok, OutFd} = if SigFile == undefined ->
 			      {ok, <<>>};
 			 true ->
@@ -62,25 +67,40 @@ sig(File, SigFile) ->
 	    Err
     end.
 
--spec delta(file:filename(), file:filename()) -> {ok, binary()} | error().
+-spec delta(file:filename() | {raw, iodata()},
+	    file:filename() | {raw, iodata()}) -> {ok, binary()} | error().
 %% @doc Computes delta of a file `NewFile' using signature from file `SigFile'.
 %% The signature file should be previously created using `sig/2'.
 %% @see sig/2.
 delta(SigFile, NewFile) ->
     delta(SigFile, NewFile, undefined).
 
--spec delta(file:filename(), file:filename(), file:filename()) -> ok | error();
-	   (file:filename(), file:filename(), undefined) -> {ok, binary()} | error().
+-spec delta(file:filename() | {raw, iodata()},
+	    file:filename() | {raw, iodata()},
+	    file:filename()) -> ok | error();
+	   (file:filename() | {raw, iodata()},
+	    file:filename() | {raw, iodata()},
+	    undefined) -> {ok, binary()} | error().
 %% @doc Computes delta of a file `NewFile' using signature from file `SigFile'
 %% and writes it into a file `DeltaFile'.
 %% The signature file should be previously created using `sig/2'.
 %% @see sig/2.
 delta(SigFile, NewFile, DeltaFile) ->
     try
-	{ok, SigFd} = file:open(SigFile, [read|file_opts()]),
+	{ok, SigFd} = case SigFile of
+			  {raw, SigData} ->
+			      {ok, iolist_to_binary(SigData)};
+			  _ ->
+			      file:open(SigFile, [read|file_opts()])
+		      end,
 	Context = loadsig_init(),
 	ok = execute(Context, SigFd, undefined),
-	{ok, InFd} = file:open(NewFile, [read|file_opts()]),
+	{ok, InFd} = case NewFile of
+			 {raw, NewFileData} ->
+			     {ok, iolist_to_binary(NewFileData)};
+			 _ ->
+			     file:open(NewFile, [read|file_opts()])
+		     end,
 	{ok, OutFd} = if DeltaFile == undefined ->
 			      {ok, <<>>};
 			 true ->
@@ -92,7 +112,8 @@ delta(SigFile, NewFile, DeltaFile) ->
 	    Err
     end.
 
--spec patch(file:filename(), file:filename()) -> {ok, binary()} | error().
+-spec patch(file:filename() | {raw, iodata()},
+	    file:filename() | {raw, iodata()}) -> {ok, binary()} | error().
 %% @doc Applies delta from a file `DeltaFile' to a file `OrigFile'.
 %% The delta file should be previously created using `delta/3'.
 %% WARNING: whole `OrigFile' to be read into the memory
@@ -102,8 +123,12 @@ delta(SigFile, NewFile, DeltaFile) ->
 patch(OrigFile, DeltaFile) ->
     patch(OrigFile, DeltaFile, undefined).
 
--spec patch(file:filename(), file:filename(), file:filename()) -> ok | error();
-	   (file:filename(), file:filename(), undefined) -> {ok, binary()} | error().
+-spec patch(file:filename() | {raw, iodata()},
+	    file:filename() | {raw, iodata()},
+	    file:filename()) -> ok | error();
+	   (file:filename() | {raw, iodata()},
+	    file:filename() | {raw, iodata()},
+	    undefined) -> {ok, binary()} | error().
 %% @doc Applies delta from a file `DeltaFile' to a file `OrigFile'
 %% and writes the result into a file `NewFile'.
 %% The delta file should be previously created using `delta/3'.
@@ -113,8 +138,18 @@ patch(OrigFile, DeltaFile) ->
 %% @see delta/3.
 patch(OrigFile, DeltaFile, NewFile) ->
     try
-	{ok, Data} = file:read_file(OrigFile),
-	{ok, InFd} = file:open(DeltaFile, [read|file_opts()]),
+	{ok, Data} = case OrigFile of
+			 {raw, OrigData} ->
+			     {ok, OrigData};
+			 _ ->
+			     file:read_file(OrigFile)
+		     end,
+	{ok, InFd} = case DeltaFile of
+			 {raw, Delta} ->
+			     {ok, Delta};
+			 _ ->
+			     file:open(DeltaFile, [read|file_opts()])
+		     end,
 	{ok, OutFd} = if NewFile == undefined ->
 			      {ok, <<>>};
 			 true ->
@@ -244,30 +279,28 @@ job_done(_Context) ->
 format_error_nif(_Err) ->
     erlang:nif_error(nif_not_loaded).
 
-execute(Context, InFd, OutFd) ->
-    case file:read(InFd, ?BLOCKSIZE) of
-	{ok, DataIn} ->
+execute(Context, In, Out) ->
+    case read(In) of
+	{ok, DataIn, NewIn} ->
 	    case job_iter(Context, DataIn) of
-		{ok, DataOut} when is_binary(OutFd) ->
-		    execute(Context, InFd, <<OutFd/binary, DataOut/binary>>);
 		{ok, DataOut} ->
-		    case file:write(OutFd, DataOut) of
+		    case write(Out, DataOut) of
+			{ok, NewOut} ->
+			    execute(Context, NewIn, NewOut);
 			ok ->
-			    execute(Context, InFd, OutFd);
+			    execute(Context, NewIn, Out);
 			{error, _} = Err ->
 			    Err
 		    end;
 		ok ->
-		    execute(Context, InFd, OutFd);
+		    execute(Context, NewIn, Out);
 		{error, _} = Err ->
 		    Err
 	    end;
 	eof ->
 	    case job_done(Context) of
-		{ok, DataOut} when is_binary(OutFd) ->
-		    {ok, <<OutFd/binary, DataOut/binary>>};
 		{ok, DataOut} ->
-		    file:write(OutFd, DataOut);
+		    write(Out, DataOut);
 		ok ->
 		    ok;
 		{error, _} = Err ->
@@ -276,6 +309,23 @@ execute(Context, InFd, OutFd) ->
 	{error, _} = Err ->
 	    Err
     end.
+
+read(<<>>) ->
+    eof;
+read(In) when is_binary(In) ->
+    {ok, In, <<>>};
+read(Fd) ->
+    case file:read(Fd, ?BLOCKSIZE) of
+	{ok, Data} ->
+	    {ok, Data, Fd};
+	Other ->
+	    Other
+    end.
+
+write(Out, Data) when is_binary(Out) ->
+    {ok, <<Out/binary, Data/binary>>};
+write(Fd, Data) ->
+    file:write(Fd, Data).
 
 file_opts() ->
     [raw, binary, {read_ahead, ?BLOCKSIZE}].
