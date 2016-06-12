@@ -22,8 +22,8 @@
 %%%----------------------------------------------------------------------
 
 {application, rsync,
- [{description,  "@PACKAGE_NAME@"},
-  {vsn,          "@PACKAGE_VERSION@"},
+ [{description,  "Erlang librsync wrapper"},
+  {vsn,          "1.0.0"},
   {modules,      []},
   {registered,   []},
   {applications, [kernel, stdlib]},

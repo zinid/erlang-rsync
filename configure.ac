@@ -32,6 +32,5 @@ AC_SEARCH_LIBS([rs_sig_begin], [rsync], [], [
     AC_MSG_ERROR([librsync library was not found])])
 
 AC_CONFIG_FILES([vars.config
-		 src/rsync.app.src
 		 doc/overview.edoc])
 AC_OUTPUT

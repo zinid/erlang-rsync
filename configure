@@ -3804,7 +3804,7 @@ else
 fi
 
 
-ac_config_files="$ac_config_files vars.config src/rsync.app.src doc/overview.edoc"
+ac_config_files="$ac_config_files vars.config doc/overview.edoc"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -4512,7 +4512,6 @@ for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
     "vars.config") CONFIG_FILES="$CONFIG_FILES vars.config" ;;
-    "src/rsync.app.src") CONFIG_FILES="$CONFIG_FILES src/rsync.app.src" ;;
     "doc/overview.edoc") CONFIG_FILES="$CONFIG_FILES doc/overview.edoc" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
