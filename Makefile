@@ -18,7 +18,6 @@ distclean: clean
 	rm -rf doc/*.css
 	rm -rf doc/*.png
 	rm -f doc/edoc-info
-	rm -f src/rsync.app.src
 
 test: all
 	rebar skip_deps=true eunit
