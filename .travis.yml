@@ -1,0 +1,18 @@
+language: erlang
+
+otp_release:
+  - 17.1
+  - 18.3
+
+install:
+  - sudo apt-get -qq install librsync librsync-dev rebar
+
+script:
+  - ./configure
+  - make
+  - make doc
+  - make xref
+  - make test
+
+notifications:
+  email: false
