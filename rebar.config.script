@@ -9,7 +9,12 @@ LDFlags = proplists:get_value(ldflags, Cfg, " -lrsync ").
 [{erl_opts, [debug_info, {src_dirs, ["src"]}]},
  {port_env, [{"CFLAGS", "$CFLAGS " ++ CFlags},
 	     {"LDFLAGS", "$LDFLAGS " ++ LDFlags}]},
- {port_specs, [{"priv/lib/rsync.so", ["c_src/rsync.c"]}]}].
+ {port_specs, [{"priv/lib/rsync.so", ["c_src/rsync.c"]}]},
+ {xref_warnings, false},
+ {xref_checks, [undefined_function_calls, undefined_functions,
+		locals_not_used,
+		deprecated_function_calls, deprecated_functions]},
+ {xref_queries, [{"(XC - UC) || (XU - X - B)",[]}]}].
 
 %% Local Variables:
 %% mode: erlang

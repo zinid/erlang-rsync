@@ -20,10 +20,13 @@ distclean: clean
 	rm -f doc/edoc-info
 	rm -f src/rsync.app.src
 
-test:
+test: all
 	rebar skip_deps=true eunit
 
 doc:
 	rebar doc
 
-.PHONY: clean src test distclean doc
+xref: all
+	rebar xref
+
+.PHONY: clean src test distclean doc xref
