@@ -5,7 +5,7 @@ otp_release:
   - 18.3
 
 install:
-  - sudo apt-get -qq install librsync librsync-dev rebar
+  - sudo apt-get -qq install librsync-dev
 
 script:
   - ./configure
