@@ -1,6 +1,8 @@
 Erlang librsync wrapper
 ========================
 
+[![Build Status](https://travis-ci.org/zinid/erlang-rsync.svg?branch=master)](https://travis-ci.org/zinid/erlang-rsync)
+
 erlang-rsync is an Erlang wrapper of [librsync](http://librsync.sourcefrog.net)
 library. It provides basic functions for direct file manipulations
 (`sig/1`, `delta/2`, etc) as well as low-level functions
