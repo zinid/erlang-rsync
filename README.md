@@ -63,6 +63,11 @@ result is written in `new_local_file`.
 > rsync:patch("local_file", "delta_file", "new_local_file").
 ok.
 ```
+Now `new_local_file` is "equal" to `remote_file`.
+```
+> file:read_file("new_local_file") == file:read_file("remote_file").
+true.
+```
 
 ### Limitation
 
