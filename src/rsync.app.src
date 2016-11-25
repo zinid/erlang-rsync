@@ -27,7 +27,7 @@
   {modules,      []},
   {registered,   []},
   {applications, [kernel, stdlib]},
-  {mod,          {rsync,[]}}]}.
+  {env,          []}]}.
 
 %% Local Variables:
 %% mode: erlang
