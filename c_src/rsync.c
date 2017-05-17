@@ -5,7 +5,6 @@
 
 #define RS_JOB_BLOCKSIZE (1 << 16)
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
-//#define RS_DEFAULT_STRONG_LEN	8
 
 
 typedef enum {
@@ -142,7 +141,6 @@ static ERL_NIF_TERM sig_init(ErlNifEnv* env, int argc,
 			     const ERL_NIF_TERM argv[])
 {
   state_t *state = init_state();
-
   state->job = rs_sig_begin(RS_DEFAULT_BLOCK_LEN, RS_MAX_STRONG_SUM_LENGTH, RS_BLAKE2_SIG_MAGIC);
   state->type = SIGNATURE;
   ERL_NIF_TERM result = enif_make_resource(env, state);
