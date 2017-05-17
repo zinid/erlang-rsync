@@ -5,6 +5,8 @@
 
 #define RS_JOB_BLOCKSIZE (1 << 16)
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+//#define RS_DEFAULT_STRONG_LEN	8
+
 
 typedef enum {
   SIGNATURE,
@@ -77,7 +79,7 @@ static rs_result read_callback(state_t *state, rs_long_t pos, size_t *len, void 
   ErlNifBinary bin = state->bin;
   if (pos >= bin.size)
     return RS_INPUT_ENDED;
-  
+
   if (pos + *len > bin.size)
     *len = bin.size - pos;
 
@@ -140,7 +142,8 @@ static ERL_NIF_TERM sig_init(ErlNifEnv* env, int argc,
 			     const ERL_NIF_TERM argv[])
 {
   state_t *state = init_state();
-  state->job = rs_sig_begin(RS_DEFAULT_BLOCK_LEN, RS_DEFAULT_STRONG_LEN);
+
+  state->job = rs_sig_begin(RS_DEFAULT_BLOCK_LEN, RS_MAX_STRONG_SUM_LENGTH, RS_BLAKE2_SIG_MAGIC);
   state->type = SIGNATURE;
   ERL_NIF_TERM result = enif_make_resource(env, state);
   enif_release_resource(state);
@@ -163,13 +166,13 @@ static ERL_NIF_TERM delta_init(ErlNifEnv* env, int argc,
 {
   state_t *state = NULL;
   rs_result res;
-  
+
   if (!enif_get_resource(env, argv[0], state_r, (void *) &state))
     return enif_make_badarg(env);
 
   if (state->type != LOADSIG)
     return enif_make_badarg(env);
-  
+
   res = rs_build_hash_table(state->sig);
   if (res != RS_DONE)
     return mk_error(env, res);
@@ -200,7 +203,7 @@ static ERL_NIF_TERM patch_init(ErlNifEnv* env, int argc,
 static ERL_NIF_TERM mk_output(ErlNifEnv* env, state_t *state)
 {
   ErlNifBinary output;
-  
+
   if (state->type == LOADSIG) {
     return enif_make_atom(env, "ok");
   } else {
@@ -221,7 +224,7 @@ static ERL_NIF_TERM do_job(ErlNifEnv* env, int argc,
   size_t input_size;
   char *input_data;
   rs_result res;
-    
+
   if (!enif_get_resource(env, argv[0], state_r, (void *) &state))
     return enif_make_badarg(env);
 
