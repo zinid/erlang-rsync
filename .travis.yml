@@ -2,9 +2,7 @@ language: erlang
 
 otp_release:
   - 17.1
-  - 18.3
-  - 19.2
-  - 20.2
+  - 21.3
 
 install:
   - sudo apt-get -qq install librsync-dev
